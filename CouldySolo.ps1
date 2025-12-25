@@ -8,16 +8,15 @@ Add-Type -AssemblyName System.Drawing
 # FORM
 # =========================
 $form = New-Object System.Windows.Forms.Form
-$form.Size = New-Object System.Drawing.Size(640,360)
+$form.Size = New-Object System.Drawing.Size(640,380)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None"
 $form.BackColor = [System.Drawing.Color]::FromArgb(10,15,14)
 $form.TopMost = $true
 
-# DoubleBuffer (hatasız yöntem)
+# DoubleBuffered (hatasız)
 $flags = [System.Reflection.BindingFlags]"Instance,NonPublic"
-$prop = $form.GetType().GetProperty("DoubleBuffered",$flags)
-$prop.SetValue($form,$true,$null)
+$form.GetType().GetProperty("DoubleBuffered",$flags).SetValue($form,$true,$null)
 
 # =========================
 # TITLE
@@ -27,7 +26,7 @@ $title.Text = "COULDYSOLO"
 $title.Font = New-Object System.Drawing.Font("Segoe UI",28,[System.Drawing.FontStyle]::Bold)
 $title.ForeColor = [System.Drawing.Color]::FromArgb(0,255,180)
 $title.AutoSize = $true
-$title.Location = New-Object System.Drawing.Point(190,40)
+$title.Location = New-Object System.Drawing.Point(190,35)
 $form.Controls.Add($title)
 
 # =========================
@@ -38,7 +37,7 @@ $subtitle.Text = "Security Loader"
 $subtitle.Font = New-Object System.Drawing.Font("Segoe UI",11)
 $subtitle.ForeColor = [System.Drawing.Color]::FromArgb(120,200,180)
 $subtitle.AutoSize = $true
-$subtitle.Location = New-Object System.Drawing.Point(260,90)
+$subtitle.Location = New-Object System.Drawing.Point(260,85)
 $form.Controls.Add($subtitle)
 
 # =========================
@@ -51,6 +50,22 @@ $status.ForeColor = [System.Drawing.Color]::Gray
 $status.AutoSize = $true
 $status.Location = New-Object System.Drawing.Point(235,300)
 $form.Controls.Add($status)
+
+# =========================
+# START BUTTON
+# =========================
+$button = New-Object System.Windows.Forms.Button
+$button.Text = "Servis Analizi Başlat"
+$button.Size = New-Object System.Drawing.Size(260,50)
+$button.Location = New-Object System.Drawing.Point(190,280)
+$button.Font = New-Object System.Drawing.Font("Segoe UI",11,[System.Drawing.FontStyle]::Bold)
+$button.BackColor = [System.Drawing.Color]::FromArgb(0,50,40)
+$button.ForeColor = [System.Drawing.Color]::FromArgb(0,255,180)
+$button.FlatStyle = "Flat"
+$button.FlatAppearance.BorderSize = 2
+$button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(0,255,180)
+$button.Visible = $false
+$form.Controls.Add($button)
 
 # =========================
 # LOADER ANIMATION
@@ -66,7 +81,7 @@ $form.Add_Paint({
         [System.Drawing.Color]::FromArgb(0,255,180),5
     )
 
-    $rect = New-Object System.Drawing.Rectangle(270,150,100,100)
+    $rect = New-Object System.Drawing.Rectangle(270,140,100,100)
     $g.DrawArc($pen,$rect,$script:angle,270)
 })
 
@@ -87,21 +102,29 @@ $timer.Add_Tick({
         60  { $status.Text = "Loading core services..." }
         120 { $status.Text = "Checking environment..." }
         180 { $status.Text = "Preparing system..." }
-        240 { $status.Text = "Starting analysis..." }
-    }
-
-    if ($step -ge 280) {
-        $timer.Stop()
-
-        Start-Process cmd -ArgumentList @(
-            "/k",
-            "powershell Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass && powershell Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/trSScommunity/ServisAnalizi.ps1/main/tr/ServisAnalizi.ps1)"
-        )
-
-        $form.Close()
+        220 {
+            $status.Text = "Ready"
+            $button.Visible = $true
+            $timer.Stop()
+        }
     }
 
     $form.Invalidate()
+})
+
+# =========================
+# BUTTON CLICK
+# =========================
+$button.Add_Click({
+    $status.Text = "Starting analysis..."
+
+    Start-Process cmd -ArgumentList @(
+        "/k",
+        "powershell Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass && powershell Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/trSScommunity/ServisAnalizi.ps1/main/tr/ServisAnalizi.ps1)"
+    )
+
+    Start-Sleep -Milliseconds 500
+    $form.Close()
 })
 
 # =========================
