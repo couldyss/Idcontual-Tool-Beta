@@ -8,64 +8,47 @@ Add-Type -AssemblyName System.Drawing
 # FORM
 # =========================
 $form = New-Object System.Windows.Forms.Form
-$form.Size = New-Object System.Drawing.Size(640,400)
+$form.Size = New-Object System.Drawing.Size(720,420)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None"
-$form.BackColor = [System.Drawing.Color]::FromArgb(12,18,17)
+$form.BackColor = [System.Drawing.Color]::FromArgb(18,18,18)
 $form.TopMost = $true
 
-# Double buffer (flicker yok)
+# Double buffer
 $flags = [System.Reflection.BindingFlags]"Instance,NonPublic"
 $form.GetType().GetProperty("DoubleBuffered",$flags).SetValue($form,$true,$null)
+
+# =========================
+# MAIN PANEL
+# =========================
+$panel = New-Object System.Windows.Forms.Panel
+$panel.Dock = "Fill"
+$panel.BackColor = $form.BackColor
+$form.Controls.Add($panel)
 
 # =========================
 # TITLE
 # =========================
 $title = New-Object System.Windows.Forms.Label
 $title.Text = "COULDYSOLO"
-$title.Font = New-Object System.Drawing.Font("Segoe UI Semibold",26)
-$title.ForeColor = [System.Drawing.Color]::FromArgb(0,240,190)
-$title.AutoSize = $true
-$title.Location = New-Object System.Drawing.Point(200,30)
-$form.Controls.Add($title)
+$title.Font = New-Object System.Drawing.Font("Segoe UI Semibold",28)
+$title.ForeColor = [System.Drawing.Color]::FromArgb(0,224,198)
+$title.Size = New-Object System.Drawing.Size(720,60)
+$title.Location = New-Object System.Drawing.Point(0,25)
+$title.TextAlign = "MiddleCenter"
+$panel.Controls.Add($title)
 
 # =========================
 # SUBTITLE
 # =========================
 $subtitle = New-Object System.Windows.Forms.Label
 $subtitle.Text = "Security Loader"
-$subtitle.Font = New-Object System.Drawing.Font("Segoe UI",10)
-$subtitle.ForeColor = [System.Drawing.Color]::FromArgb(120,190,170)
-$subtitle.AutoSize = $true
-$subtitle.Location = New-Object System.Drawing.Point(265,70)
-$form.Controls.Add($subtitle)
-
-# =========================
-# STATUS
-# =========================
-$status = New-Object System.Windows.Forms.Label
-$status.Text = "Initializing system..."
-$status.Font = New-Object System.Drawing.Font("Segoe UI",11)
-$status.ForeColor = [System.Drawing.Color]::FromArgb(160,160,160)
-$status.AutoSize = $true
-$status.Location = New-Object System.Drawing.Point(235,260)
-$form.Controls.Add($status)
-
-# =========================
-# BUTTON
-# =========================
-$button = New-Object System.Windows.Forms.Button
-$button.Text = "Servis Analizi Başlat"
-$button.Size = New-Object System.Drawing.Size(280,48)
-$button.Location = New-Object System.Drawing.Point(180,300)
-$button.Font = New-Object System.Drawing.Font("Segoe UI Semibold",11)
-$button.BackColor = [System.Drawing.Color]::FromArgb(15,40,35)
-$button.ForeColor = [System.Drawing.Color]::FromArgb(0,240,190)
-$button.FlatStyle = "Flat"
-$button.FlatAppearance.BorderSize = 1
-$button.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(0,240,190)
-$button.Visible = $false
-$form.Controls.Add($button)
+$subtitle.Font = New-Object System.Drawing.Font("Segoe UI",11)
+$subtitle.ForeColor = [System.Drawing.Color]::FromArgb(130,200,190)
+$subtitle.Size = New-Object System.Drawing.Size(720,25)
+$subtitle.Location = New-Object System.Drawing.Point(0,80)
+$subtitle.TextAlign = "MiddleCenter"
+$panel.Controls.Add($subtitle)
 
 # =========================
 # LOADER
@@ -77,40 +60,72 @@ $form.Add_Paint({
     $g.SmoothingMode = "HighQuality"
 
     $pen = New-Object System.Drawing.Pen(
-        [System.Drawing.Color]::FromArgb(0,240,190),4
+        [System.Drawing.Color]::FromArgb(0,224,198),4
     )
 
-    $rect = New-Object System.Drawing.Rectangle(270,120,100,100)
+    $rect = New-Object System.Drawing.Rectangle(310,130,100,100)
     $g.DrawArc($pen,$rect,$script:angle,260)
 })
 
 # =========================
-# TIMER
+# STATUS
 # =========================
-$step = 0
-$timer = New-Object System.Windows.Forms.Timer
-$timer.Interval = 30
+$status = New-Object System.Windows.Forms.Label
+$status.Text = "System ready"
+$status.Font = New-Object System.Drawing.Font("Segoe UI",11)
+$status.ForeColor = [System.Drawing.Color]::FromArgb(170,170,170)
+$status.Size = New-Object System.Drawing.Size(720,30)
+$status.Location = New-Object System.Drawing.Point(0,250)
+$status.TextAlign = "MiddleCenter"
+$panel.Controls.Add($status)
 
-$timer.Add_Tick({
-    $script:angle = ($script:angle + 6) % 360
-    $script:step++
+# =========================
+# CUSTOM BUTTON (HOVER)
+# =========================
+$button = New-Object System.Windows.Forms.Panel
+$button.Size = New-Object System.Drawing.Size(280,52)
+$button.Location = New-Object System.Drawing.Point(220,300)
+$button.BackColor = [System.Drawing.Color]::FromArgb(22,22,22)
+$button.Cursor = "Hand"
+$panel.Controls.Add($button)
 
-    if ($step -eq 80)  { $status.Text = "Loading core services..." }
-    if ($step -eq 160) { $status.Text = "Checking environment..." }
-    if ($step -eq 220) {
-        $status.Text = "Ready"
-        $button.Visible = $true
-        $timer.Stop()
-    }
+$buttonBorder = New-Object System.Windows.Forms.Panel
+$buttonBorder.Dock = "Fill"
+$buttonBorder.BackColor = [System.Drawing.Color]::FromArgb(0,224,198)
+$buttonBorder.Padding = New-Object System.Windows.Forms.Padding(1)
+$button.Controls.Add($buttonBorder)
 
-    $form.Invalidate()
+$buttonInner = New-Object System.Windows.Forms.Panel
+$buttonInner.Dock = "Fill"
+$buttonInner.BackColor = [System.Drawing.Color]::FromArgb(18,18,18)
+$buttonBorder.Controls.Add($buttonInner)
+
+$buttonText = New-Object System.Windows.Forms.Label
+$buttonText.Text = "Servis Analizi Başlat"
+$buttonText.Font = New-Object System.Drawing.Font("Segoe UI Semibold",11)
+$buttonText.ForeColor = [System.Drawing.Color]::FromArgb(0,224,198)
+$buttonText.Dock = "Fill"
+$buttonText.TextAlign = "MiddleCenter"
+$buttonInner.Controls.Add($buttonText)
+
+# =========================
+# HOVER ANIMATION
+# =========================
+$button.Add_MouseEnter({
+    $buttonBorder.BackColor = [System.Drawing.Color]::FromArgb(0,255,220)
+    $buttonInner.BackColor  = [System.Drawing.Color]::FromArgb(24,24,24)
+    $buttonText.ForeColor   = [System.Drawing.Color]::FromArgb(0,255,220)
 })
 
-# =========================
-# BUTTON CLICK
-# =========================
-$button.Add_Click({
-    $status.Text = "Starting analysis..."
+$button.Add_MouseLeave({
+    $buttonBorder.BackColor = [System.Drawing.Color]::FromArgb(0,224,198)
+    $buttonInner.BackColor  = [System.Drawing.Color]::FromArgb(18,18,18)
+    $buttonText.ForeColor   = [System.Drawing.Color]::FromArgb(0,224,198)
+})
+
+# Click (panel + text)
+$runAction = {
+    $status.Text = "Starting service analysis..."
 
     Start-Process cmd -ArgumentList @(
         "/k",
@@ -119,11 +134,24 @@ $button.Add_Click({
 
     Start-Sleep -Milliseconds 400
     $form.Close()
-})
+}
+
+$button.Add_Click($runAction)
+$buttonText.Add_Click($runAction)
 
 # =========================
-# START
+# LOADER TIMER
 # =========================
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = 30
+$timer.Add_Tick({
+    $script:angle = ($script:angle + 6) % 360
+    $form.Invalidate()
+})
 $timer.Start()
+
+# =========================
+# SHOW
+# =========================
 $form.ShowDialog() | Out-Null
 $timer.Dispose()
