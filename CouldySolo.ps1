@@ -1,98 +1,110 @@
-Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
+# =========================
+# BASIC SETTINGS
+# =========================
+$ErrorActionPreference = "Stop"
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+[System.Windows.Forms.Application]::EnableVisualStyles()
 
-# ================== XAML ==================
-$xaml = @"
-<Window
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    Title="COULDYSOLO Security Tool"
-    Width="600" Height="420"
-    WindowStartupLocation="CenterScreen"
-    Background="#0B0F0E"
-    ResizeMode="NoResize">
+# =========================
+# FORM
+# =========================
+$form = New-Object System.Windows.Forms.Form
+$form.Text = "SS ANALYSIS TOOL"
+$form.Size = New-Object System.Drawing.Size(520,420)
+$form.StartPosition = "CenterScreen"
+$form.FormBorderStyle = "FixedSingle"
+$form.MaximizeBox = $false
+$form.BackColor = [System.Drawing.Color]::FromArgb(18,18,18)
 
-    <Grid>
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+# =========================
+# TITLE
+# =========================
+$title = New-Object System.Windows.Forms.Label
+$title.Text = "SS ANALYSIS TOOL"
+$title.Font = New-Object System.Drawing.Font("Segoe UI",20,[System.Drawing.FontStyle]::Bold)
+$title.ForeColor = [System.Drawing.Color]::FromArgb(0,255,180)
+$title.AutoSize = $true
+$title.Location = New-Object System.Drawing.Point(135,20)
+$form.Controls.Add($title)
 
-            <TextBlock Text="COULDYSOLO"
-                       Foreground="#00FFC6"
-                       FontSize="36"
-                       FontWeight="Bold"
-                       HorizontalAlignment="Center"/>
+# =========================
+# SUBTEXT
+# =========================
+$sub = New-Object System.Windows.Forms.Label
+$sub.Text = "Select analysis to run"
+$sub.Font = New-Object System.Drawing.Font("Segoe UI",10)
+$sub.ForeColor = [System.Drawing.Color]::Gray
+$sub.AutoSize = $true
+$sub.Location = New-Object System.Drawing.Point(190,65)
+$form.Controls.Add($sub)
 
-            <TextBlock Text="Security Loader"
-                       Foreground="#8FFFEA"
-                       FontSize="14"
-                       Margin="0,0,0,30"
-                       HorizontalAlignment="Center"/>
+# =========================
+# BUTTON STYLE FUNCTION
+# =========================
+function New-ToolButton($text,$y) {
+    $btn = New-Object System.Windows.Forms.Button
+    $btn.Text = $text
+    $btn.Size = New-Object System.Drawing.Size(360,45)
+    $btn.Location = New-Object System.Drawing.Point(70,$y)
+    $btn.FlatStyle = "Flat"
+    $btn.FlatAppearance.BorderSize = 0
+    $btn.BackColor = [System.Drawing.Color]::FromArgb(30,30,30)
+    $btn.ForeColor = [System.Drawing.Color]::White
+    $btn.Font = New-Object System.Drawing.Font("Segoe UI",11)
 
-            <!-- BUTTON STYLE -->
-            <StackPanel.Resources>
-                <Style TargetType="Button">
-                    <Setter Property="Width" Value="360"/>
-                    <Setter Property="Height" Value="50"/>
-                    <Setter Property="Margin" Value="0,10"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="Foreground" Value="Black"/>
-                    <Setter Property="Background" Value="#00FFC6"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Cursor" Value="Hand"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}"
-                                        CornerRadius="8">
-                                    <ContentPresenter
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#00D6A4"/>
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter Property="Background" Value="#00B38A"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </StackPanel.Resources>
+    $btn.Add_MouseEnter({
+        $this.BackColor = [System.Drawing.Color]::FromArgb(0,255,180)
+        $this.ForeColor = [System.Drawing.Color]::Black
+    })
 
-            <Button x:Name="NetBtn" Content="Ağ Bağlantı Analizi"/>
-            <Button x:Name="SrvBtn" Content="Gelişmiş Servis Analizi"/>
-            <Button x:Name="PreBtn" Content="Prefetch Bypass Tespit / Attribute"/>
+    $btn.Add_MouseLeave({
+        $this.BackColor = [System.Drawing.Color]::FromArgb(30,30,30)
+        $this.ForeColor = [System.Drawing.Color]::White
+    })
 
-        </StackPanel>
-    </Grid>
-</Window>
-"@
+    return $btn
+}
 
-# ================== LOAD WINDOW ==================
-$reader = New-Object System.Xml.XmlNodeReader ([xml]$xaml)
-$window = [Windows.Markup.XamlReader]::Load($reader)
+# =========================
+# BUTTONS
+# =========================
+$btnService = New-ToolButton "Servis Analizi" 120
+$btnNetwork = New-ToolButton "Ağ Bağlantı Analizi" 180
+$btnAdvanced = New-ToolButton "Gelişmiş Servis Analizi" 240
+$btnPrefetch = New-ToolButton "Prefetch Bypass Tespit (Attribute)" 300
 
-# ================== FIND BUTTONS ==================
-$NetBtn = $window.FindName("NetBtn")
-$SrvBtn = $window.FindName("SrvBtn")
-$PreBtn = $window.FindName("PreBtn")
+$form.Controls.AddRange(@(
+    $btnService,
+    $btnNetwork,
+    $btnAdvanced,
+    $btnPrefetch
+))
 
-# ================== BUTTON ACTIONS ==================
-
-$NetBtn.Add_Click({
+# =========================
+# BUTTON ACTIONS
+# =========================
+$btnService.Add_Click({
     Start-Process powershell -ArgumentList `
-    '-NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/trSScommunity/BaglantiAnalizi/refs/heads/main/BaglantiAnalizi.ps1)"'
+    'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/trSScommunity/ServisAnalizi.ps1/main/tr/ServisAnalizi.ps1)'
 })
 
-$SrvBtn.Add_Click({
+$btnNetwork.Add_Click({
     Start-Process powershell -ArgumentList `
-    '-NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/praiselily/lilith-ps/refs/heads/main/Services.ps1)"'
+    'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/trSScommunity/BaglantiAnalizi/refs/heads/main/BaglantiAnalizi.ps1)'
 })
 
-$PreBtn.Add_Click({
+$btnAdvanced.Add_Click({
     Start-Process powershell -ArgumentList `
-    '-NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/bacanoicua/Screenshare/main/RedLotusPrefetchIntegrityAnalyzer.ps1)"'
+    'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/praiselily/lilith-ps/refs/heads/main/Services.ps1)'
 })
 
-# ================== SHOW ==================
-$window.ShowDialog() | Out-Null
+$btnPrefetch.Add_Click({
+    Start-Process powershell -ArgumentList `
+    'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; Invoke-Expression (Invoke-RestMethod https://raw.githubusercontent.com/bacanoicua/Screenshare/main/RedLotusPrefetchIntegrityAnalyzer.ps1)'
+})
+
+# =========================
+# RUN
+# =========================
+$form.ShowDialog() | Out-Null
